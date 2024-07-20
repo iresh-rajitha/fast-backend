@@ -1,5 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import os
 
@@ -13,7 +14,7 @@ if not os.path.exists(UPLOAD_DIRECTORY):
 # Enable CORS
 origins = [
     "http://localhost:5173",       # React frontend running on port 5173
-    "http://192.168.8.132:3000",    # React frontend running on your specific IP address
+    # "http://192.168.8.132:3000",    # React frontend running on your specific IP address
 ]
 
 app.add_middleware(
@@ -23,6 +24,12 @@ app.add_middleware(
     allow_methods=["GET", "POST"],  # Adjust as per your API methods
     allow_headers=["*"],
 )
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/")
+async def serve_frontend():
+    return FileResponse("static/index.html")
 
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...), folder: str = ""):
@@ -55,6 +62,18 @@ async def download_file(folder: str = "", filename: str = ""):
     if os.path.exists(file_path):
         return FileResponse(path=file_path, filename=filename)
     raise HTTPException(status_code=404, detail="File not found")
+
+@app.get("/{path:path}")
+async def serve_any(path: str):
+    print(path)
+    file_path = f"static/{path}"
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+    return FileResponse("static/index.html")
+
+# @app.get("/", tags=["root"])
+# async def read_root() -> dict:
+#     return {"message": "Welcome to your todo list."}
 
 if __name__ == "__main__":
     import uvicorn
