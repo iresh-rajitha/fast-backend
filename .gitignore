@@ -1,0 +1,10 @@
+# Virtual environment
+.venv/
+
+#Folders
+.idea/
+static/
+uploaded_files/
+
+
+
